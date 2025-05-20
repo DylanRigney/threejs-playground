@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Bouncing Ball</title>
+    <style>
+        /* Eliminate browser defaults for full-screen canvas */
+        body { 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        #container { 
+            width: 100vw; 
+            height: 100vh; 
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+
+    <!-- Essential Three.js libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+    // =========== CORE THREE.JS SETUP ===========
+    
+    // Scene - The root container for all 3D objects
+    const scene = new THREE.Scene();
+
+    // define camera values
+    const fov = 75;
+    const aspect = window.innerWidth / window.innerHeight;
+    const near = .1;
+    const far = 1000;
+    
+    // Camera - Our view into the 3D world
+    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    // Position camera
+    camera.position.z = 15;
+
+    // Renderer - Draws 3D scene to screen
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    // Add renderer to DOM
+    const container = document.getElementById("container");
+    container.appendChild(renderer.domElement);
+    
+    // Camera Controls 
+    const controls = new THREE.OrbitControls(camera, renderer.domElement) 
+    
+    
+// ----------------------------------------------------------------------------------------
+//  END OF THE STANDARD CODE FOR THE ASSIGNMENT
+//  Following this is where you must place your own custom code to complete the assignment
+// ----------------------------------------------------------------------------------------
+
+    // Create the sphere. 
+	// first create the geometry, then the material
+	// then combine the together to create the mesh and add it to the scene
+    // define the radius because we will need it later
+    const radius    = 1.5;
+    const sphereGeometry = new THREE.SphereGeometry(1.5, 32, 16);
+    const sphereMaterial = new THREE.MeshLambertMaterial({ color: 0x0000ff });
+    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    scene.add(sphere);
+
+    // add a wall so the scene isn't black
+    // In order to get the wall to be lit up it has to be pretty close to the scene
+    // and it needs to use a material that has shadowing
+    const wallGeo = new THREE.PlaneGeometry(80, 60);
+    const wallMat = new THREE.MeshLambertMaterial({ 
+        color: 0xffffff,
+        side: THREE.DoubleSide
+    });
+    const wall = new THREE.Mesh(wallGeo, wallMat);
+    wall.position.set(0, 0, -8);
+    scene.add(wall);
+
+    // Add a point light in the corner of the room to light up the scene. 
+    // The point light has the lamp like effect that the demonstration picture has
+    const light = new THREE.PointLight(
+        0xFFFFAA, 
+        10, 
+        95, 
+        2); 
+    light.position.set(-10, 5, 5);
+    scene.add(light);
+
+    // function to pick a random color
+    function randomColor() {
+        return Math.random() * 0xffffff;
+    }
+
+    // Set up bouncing ball animation
+
+    // Compute bounds of the viewing area
+    // first calculate frustum height by getting half the field of view in radians
+    const halfFov = (camera.fov*Math.PI/180)/2;
+    // then calculate frustum height
+    const frustumHeight = 2 * Math.tan(halfFov) * camera.position.z;
+    // Then calculate frustum width using the height and aspect ratio
+    const frustumWidth  = frustumHeight * camera.aspect;
+
+    // Calculate limits of the viewing area
+    // we have to use the radius of the sphere so it doesnt go outiside the view port
+    const xLimit = frustumWidth/2  - radius*0.9;
+    const yLimit = frustumHeight/2 - radius*0.9;
+
+    // Velocity in x/y
+    let vx = .1, vy = .12;
+   function animate() {
+    requestAnimationFrame(animate)
+    // Move sphere using velocities
+    sphere.position.x += vx;
+    sphere.position.y += vy;
+
+    // Check bounds and bounce + change color
+    // if the sphere hits a wall velocity is reversed and the color changes
+    // first the it checks if goes outside the limit to the left or right 
+    if (sphere.position.x >  xLimit || sphere.position.x < -xLimit) {
+      vx *= -1;
+      sphereMaterial.color.setHex(randomColor());
+    }
+    // then it checks if goes outside the limit to the top or bottom
+    if (sphere.position.y > yLimit || sphere.position.y < -yLimit) {
+      vy *= -1;
+      sphereMaterial.color.setHex(randomColor());
+    }
+
+    // Update controls (needed for OrbitControls to work)
+    controls.update();
+
+    // Render the scene
+    renderer.render(scene, camera);
+   }
+
+   animate();
+    
+// ----------------------------------------------------------------------------------------
+// END OF YOUR CUSTOM CODE FOR THE ASSIGNMENT
+// ----------------------------------------------------------------------------------------
+
+    </script>
+</body>
+</html>
